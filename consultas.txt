@@ -1,0 +1,52 @@
+# Usando la vista materializada
+
+# Estadías disponibles en temporada alta en Amsterdam (ie: Abril-Agosto) de los lugares que tengan mas de 
+300 reviews, mostrando los host con mas reviews primero.
+
+SELECT nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT * 
+      FROM bnbversion2.calendario A 
+      INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY n_reseñas DESC, num_of_reviews DESC;
+
+-----------------------------------------------------------------------------------------------------
+# ademas filtrando por precio (mostrando los mas baratos primero).
+
+SELECT nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT date,available,A.price,A.host_id,nombre,B.host_id,room_type,min_night,num_of_reviews
+      	    FROM bnbversion2.calendario A 
+            INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+AND C.price <='$60.00'	
+GROUP BY nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY C.price ASC,n_reseñas DESC, num_of_reviews DESC;
+
+-----------------------------------------------------------------------------------------------------
+# ademas filtrando por tipo de habitación.
+
+SELECT nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT date,available,A.price,A.host_id,nombre,B.host_id,room_type,min_night,num_of_reviews
+      	    FROM bnbversion2.calendario A 
+            INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+AND C.price <='$60.00'	
+AND room_type='Entire home/apt' 
+GROUP BY nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY C.price ASC,n_reseñas DESC, num_of_reviews DESC;

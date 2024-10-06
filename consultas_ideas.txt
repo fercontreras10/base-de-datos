@@ -1,0 +1,309 @@
+# Usando la vista materializada
+
+# Estadías disponibles en temporada alta en Amsterdam (ie: Abril-Agosto) de los lugares que tengan mas de 
+300 reviews, mostrando los host con mas reviews primero.
+
+SELECT nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT * 
+      FROM bnbversion2.calendario A 
+      INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY n_reseñas DESC, num_of_reviews DESC;
+
+-----------------------------------------------------------------------------------------------------
+# ademas filtrando por precio (mostrando los mas baratos primero).
+
+SELECT nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT date,available,A.price,A.host_id,nombre,B.host_id,room_type,min_night,num_of_reviews
+      	    FROM bnbversion2.calendario A 
+            INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+AND C.price <='$60.00'	
+GROUP BY nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY C.price ASC,n_reseñas DESC, num_of_reviews DESC;
+
+-----------------------------------------------------------------------------------------------------
+# ademas filtrando por tipo de habitación.
+
+SELECT nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT date,available,A.price,A.host_id,nombre,B.host_id,room_type,min_night,num_of_reviews
+      	    FROM bnbversion2.calendario A 
+            INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+AND C.price <='$60.00'	
+AND room_type='Entire home/apt' 
+GROUP BY nombre,C.price,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY C.price ASC,n_reseñas DESC, num_of_reviews DESC;
+
+
+-----------------------------------------------------------------------------------------------------
+
+
+bnbversion2.host(host_id,host_name)
+
+bnbversion2.calendario(listing_id,date,available,price,host_id)
+
+bnbversion2.Lista(id,nombre,host_id,room_type,price,latitud,Longitud,min_night,Num_of_reviews,last_review,
+review_per_month, calculated_host_listings_count,availability_365)
+
+bnbversion2.Comentarios_detalles(listing_id,id,host_id,date,reviewer_id,reviewer_name,comments)
+-----------------------------------------------------------------------------------------------------
+#Estadía por una semana en room_type = Entire home/apt en lugares con reviews 
+actuales(hechas “este” año (2018)) ordenadas por precio, por un valor de hasta 500 euros? dolares?. 
+
+SELECT host_name,room_type,price as price_per_night,min_night,nombre,min_night*price AS Precio_total
+FROM bnbversion2.Lista A
+RIGHT JOIN bnbversion2.host B ON B.host_id=A.host_id
+WHERE room_type='Entire home/apt' 
+AND availability_365 <> 0 
+AND price <> 0
+AND min_night*price <= 500
+AND min_night = 7
+AND num_of_reviews <> 0
+AND date_part('year',last_review) = 2018
+ORDER BY price DESC;
+
+# hasta 1000 euros? dolares?. 
+
+SELECT host_name,room_type,price as price_per_night,min_night,nombre,min_night*price AS Precio_total
+FROM bnbversion2.Lista A
+RIGHT JOIN bnbversion2.host B ON B.host_id=A.host_id
+WHERE room_type='Entire home/apt' 
+AND availability_365 <> 0 
+AND price <> 0
+AND min_night*price <= 1000
+AND min_night = 7
+AND num_of_reviews <> 0
+AND date_part('year',last_review) = 2018
+ORDER BY price DESC;
+
+-----------------------------------------------------------------------------------------------------
+#Estadías disponibles en temporada alta en Amsterdam (ie: Abril-Agosto) de los lugares que tengan mas de 
+300 reviews.
+
+SELECT nombre,room_type,min_night,num_of_reviews
+FROM bnbversion2.calendario A
+FULL OUTER JOIN bnbversion2.Lista B ON A.host_id=B.host_id
+WHERE date_part('month',A.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY B.nombre,room_type,B.min_night,B.num_of_reviews
+ORDER BY num_of_reviews ASC;
+
+-----------------------------------------------------------------------------------------------------
+#Estadías disponibles en temporada alta en Amsterdam (ie: Abril-Agosto) de los lugares que tengan mas de 
+300 reviews, mostrando los host con mas reviews primero.
+
+SELECT nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT * 
+      FROM bnbversion2.calendario A 
+      INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY n_reseñas DESC, num_of_reviews DESC;
+
+-----------------------------------------------------------------------------------------------------
+#Estadías disponibles en temporada alta en Amsterdam (ie: Abril-Agosto) de los lugares que tengan mas de 
+300 reviews, mostrando los host con mas reviews primero.
+
+SELECT A.host_name,n_reseñas
+FROM bnbversion2.informacion_host A INNER JOIN 
+	(SELECT host_name, MAX(n_reseñas) AS max_re
+	 FROM bnbversion2.informacion_host
+	 GROUP BY host_name) L
+ON L.host_name=A.host_name AND L.max_re=n_reseñas
+ORDER BY n_reseñas DESC;
+
+SELECT nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+FROM (SELECT * 
+      FROM bnbversion2.calendario A 
+      INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+INNER JOIN (SELECT * 
+	    FROM bnbversion2.informacion_host 
+	    WHERE n_reseñas >= 300) D ON C.num_of_reviews<>D.n_reseñas
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY nombre,D.host_name,room_type,min_night,num_of_reviews,D.n_reseñas
+ORDER BY n_reseñas DESC, num_of_reviews DESC;
+
+SELECT nombre,host_name,room_type,min_night,num_of_reviews,n_reseñas
+FROM (SELECT * 
+      FROM bnbversion2.calendario A 
+      INNER JOIN bnbversion2.Lista B ON B.host_id=A.host_id) C
+JOIN (SELECT D.host_name AS nombre_host,n_reseñas AS n_rev
+      FROM bnbversion2.informacion_host D INNER JOIN 
+	(SELECT host_name, MAX(n_reseñas) AS max_re
+	 FROM bnbversion2.informacion_host
+	 GROUP BY host_name) L ON L.host_name=D.host_name AND L.max_re=n_reseñas) 
+WHERE date_part('month',C.date) BETWEEN 04 AND 08 
+AND available='t' 
+AND num_of_reviews >= 300
+GROUP BY nombre,I.host_name,room_type,min_night,num_of_reviews,I.n_reseñas
+ORDER BY n_reseñas DESC;
+
+ORDER BY n_reseñas DESC, num_of_reviews DESC;
+
+
+-----------------------------------------------------------------------------------------------------
+#Alojamientos baratos con muchos reviews y comentarios 
+SELECT host_name,nombre,room_type,B.price,C.date,num_of_reviews,reviewer_name,comments
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON A.last_review=B.date
+FULL OUTER JOIN bnbversion2.Comentarios_detalles C ON C.date=B.date
+RIGHT JOIN bnbversion2.host D ON D.host_id=A.host_id
+WHERE available='t'
+AND B.price <='$60.00'
+AND comments IS NOT NULL
+AND comments NOT LIKE '%This is an automated posting.%'
+AND num_of_reviews BETWEEN 400 AND 695
+ORDER BY num_of_reviews DESC, B.price DESC;
+
+Select max(num_of_reviews) AS max
+FROM bnbversion2.Lista; -> 695 
+
+-----------------------------------------------------------------------------------------------------
+#El host con mas hospedajes por mes (basado en las reviews) -> Peter
+SELECT host_name,Num_of_reviews,last_review,review_per_month,calculated_host_listings_count
+FROM bnbversion2.Lista A
+RIGHT JOIN bnbversion2.host B ON B.host_id=A.host_id
+WHERE last_review IS NOT NULL
+AND review_per_month IS NOT NULL
+ORDER BY review_per_month DESC, Num_of_reviews DESC;
+
+#El host con mas reviews -> Shawna
+SELECT host_name,Num_of_reviews,last_review,review_per_month,calculated_host_listings_count
+FROM bnbversion2.Lista A
+RIGHT JOIN bnbversion2.host B ON B.host_id=A.host_id
+WHERE last_review IS NOT NULL
+AND review_per_month IS NOT NULL
+ORDER BY Num_of_reviews DESC,review_per_month DESC;
+
+#¿Quien es el mejor host? -> Kim & Daniel
+SELECT host_name,Num_of_reviews,last_review,review_per_month,calculated_host_listings_count,(review_per_month/Num_of_reviews)*100 AS porcentaje
+FROM bnbversion2.Lista A
+RIGHT JOIN bnbversion2.host B ON B.host_id=A.host_id
+WHERE last_review IS NOT NULL
+AND review_per_month IS NOT NULL
+AND Num_of_reviews <> review_per_month
+AND Num_of_reviews >= 347.5
+AND review_per_month >= 5.91
+GROUP BY B.host_name,A.Num_of_reviews,A.last_review,A.review_per_month,A.calculated_host_listings_count
+ORDER BY porcentaje DESC;
+
+#Criterio
+Select max(num_of_reviews) AS max
+FROM bnbversion2.Lista; -> 695/2=347.5
+
+Select max(review_per_month) AS max
+FROM bnbversion2.Lista; ->11.85/2=5.91
+
+-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+#Ideas sin terminar
+-----------------------------------------------------------------------------------------------------
+#Navidad en Amsterdam (24 y 25 disponible)  ????
+SELECT listing_id,date,available,price,host_id
+FROM bnbversion2.calendario
+WHERE date_part('month',date) = 12
+AND date_part('day',date) BETWEEN 24 AND 25 
+AND available='t'
+ORDER BY listing_id DESC;
+
+-----------------------------------------------------------------------------------------------------
+#Alojamientos que están disponibles al menos la mitad del año <= 365/2
+SELECT id,nombre,room_type,availability_365,min_night
+FROM bnbversion2.Lista 
+WHERE availability_365 <= (365/2)
+ORDER BY availability_365 DESC;
+
+
+SELECT B.id,B.nombre,B.room_type,B.availability_365,A.price,B.min_night
+FROM bnbversion2.calendario A
+FULL OUTER JOIN bnbversion2.Lista B ON A.host_id=B.host_id
+WHERE availability_365 <= (365/2)
+GROUP BY B.id,B.nombre,B.room_type,B.availability_365,A.price,B.min_night
+ORDER BY availability_365 DESC
+LIMIT 10;
+
+AVG(review_per_month) AS avg,
+-----------------------------------------------------------------------------------------------------
+#ingresar estadía, entrega listado de los lugares disponibles (máximo 3 meses, visa de turismo) 
+#lugares con reviews
+#filtrar por fecha
+SELECT date_arrive,date_leave,min_night,price,room_type,nombre
+FROM ( SELECT B.date as date_arrive,B.date as date_leave,A.min_night as noches,A.price as precio,A.room_type as alojamiento,A.nombre as description 
+	   FROM bnbversion2.Lista A, bnbversion2.calendario B
+	   INNER JOIN 
+SELECT room_type,price,min_night,nombre
+FROM bnbversion2.Lista 
+WHERE availability_365 <> 0 
+AND price <> 0
+AND num_of_reviews <> 0
+AND min_night <= 90
+ORDER BY min_night DESC;
+
+-----------------------------------------------------------------------------------------------------
+#airbnb fluctuation precio de alojamientos
+
+SELECT listing_id,A.host_id,id,room_type,date,available,A.price,LAG(A.price) OVER (ORDER BY date_part('year',date)) AS diferencia
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON B.date=A.last_review;
+
+SELECT listing_id,B.host_id,A.host_id,id,room_type,A.price,B.price,date,last_review,available
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON A.last_review=B.date
+WHERE listing_id=2818
+AND available='t';
+
+
+SELECT listing_id,B.host_id,A.host_id,id,room_type,A.price,B.price,date,last_review,available
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON A.last_review=B.date
+WHERE available='t'
+AND B.price <='$60.00';
+
+SELECT listing_id,B.host_id,A.host_id,id,room_type,B.price,date,last_review,available
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON A.last_review=B.date
+WHERE available='t'
+AND B.price <='$60.00'
+AND room_type IS NOT NULL;
+
+SELECT B.listing_id,C.listing_id,B.host_id,A.host_id,A.id,C.id,B.price,B.date,C.date,num_of_reviews,reviewer_name,nombre,comments
+FROM bnbversion2.Lista A
+FULL OUTER JOIN bnbversion2.calendario B ON A.last_review=B.date
+FULL OUTER JOIN bnbversion2.Comentarios_detalles C ON C.date=B.date
+WHERE available='t'
+AND B.price ='$150.00'
+AND comments IS NOT NULL
+ORDER BY num_of_reviews DESC, B.price DESC;
+
+-----------------------------------------------------------------------------------------------------
+#Porcentaje de fechas importantes en que los alojamientos se encuentran disponibles o no
+
+-----------------------------------------------------------------------------------------------------
+#Comentarios en español
+

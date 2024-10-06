@@ -1,0 +1,269 @@
+
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+CODIGO PARA INSERTAR TODOS LOS DATOS EN TABLAS SIN NINGUN TIPO DE RESTRICCIONES
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+#Se crea esquema
+CREATE SCHEMA bnbversion1;
+-----------------------------------------------------------------------
+#Para crear tabla calendar
+
+CREATE TABLE bnbversion1.calendar(
+listing_id INT,
+date DATE,
+available VARCHAR(255), 
+price MONEY
+);
+
+#Se crea segunda tabla
+CREATE TABLE bnbversion1.listings(
+id INT,
+nombre VARCHAR(255),
+host_id INT,
+host_name VARCHAR(255),
+neighbourhood_group VARCHAR(255),
+neighbourhood VARCHAR(255),
+latitud FLOAT,
+Longidud FLOAT,
+room_type VARCHAR(255),
+price SMALLINT,
+min_night SMALLINT,
+Num_of_reviews SMALLINT,
+last_review DATE,
+review_per_month FLOAT,
+calculated_host_listings_count SMALLINT,
+availability_365 SMALLINT);
+
+#Tercera tabla
+CREATE TABLE bnbversion1.reviews_details(
+listing_id INT,
+id INT,
+date DATE,
+reviewer_id INT,
+reviewer_name VARCHAR(255),
+comments VARCHAR(10000)
+);
+
+-----------------------------------------------------------------------
+#Para subir los datos
+
+COPY bnbversion1.reviews_details FROM '/home/cc3201/datos/reviews_details.csv' DELIMITER ',' CSV HEADER;
+SELECT * FROM bnbversion1.reviews_details WHERE id='74084';
+
+COPY bnbversion1.calendar FROM '/home/cc3201/datos/calendar.csv' DELIMITER ',' CSV HEADER;
+#cuidado
+SELECT * FROM bnbversion1.calendar WHERE listing_id='255809';
+
+COPY bnbversion1.listings FROM '/home/cc3201/datos/listings.csv' DELIMITER ',' CSV HEADER;
+SELECT * FROM bnbversion1.listings WHERE id='2818';
+
+-----------------------------------------------------------------------
+#para borrar tablas
+DROP TABLE bnbversion1.calendar;
+DROP TABLE bnbversion1.listings;
+DROP TABLE bnbversion1.reviews_details;
+
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+#TABLAS BUENAS
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+#Se crea esquema
+CREATE SCHEMA bnbversion2;
+-----------------------------------------------------------------------
+#Se crea tablas
+
+CREATE TABLE bnbversion2.host(
+host_id INT,
+host_name VARCHAR(255),
+PRIMARY KEY(host_id)
+);
+
+CREATE TABLE bnbversion2.Lista(
+id INT,
+nombre VARCHAR(255),
+host_id INT,
+room_type VARCHAR(255),
+price SMALLINT,
+latitud FLOAT,
+Longitud FLOAT,
+min_night SMALLINT,
+Num_of_reviews SMALLINT,
+last_review DATE,
+review_per_month FLOAT,
+calculated_host_listings_count SMALLINT,
+availability_365 SMALLINT,
+PRIMARY KEY(id,host_id),
+FOREIGN KEY(host_id) REFERENCES bnbversion2.host(host_id)
+);
+
+CREATE TABLE bnbversion2.calendario(
+listing_id INT,
+date DATE,
+available VARCHAR(255),
+price MONEY,
+host_id INT,
+PRIMARY KEY(listing_id,date,host_id),
+FOREIGN KEY(listing_id,host_id) REFERENCES bnbversion2.Lista(id,host_id)
+);
+
+CREATE TABLE bnbversion2.Comentarios_detalles(
+listing_id INT,
+id INT,
+host_id INT,
+date DATE,
+reviewer_id INT,
+reviewer_name VARCHAR(255),
+comments VARCHAR(10000),
+PRIMARY KEY(listing_id,reviewer_id,id),
+FOREIGN KEY(listing_id,host_id) REFERENCES bnbversion2.Lista(id,host_id)
+);
+-----------------------------------------------------------------------
+#BORRAR TABLAS
+#para borrar tablas
+DROP TABLE bnbversion2.calendario;
+DROP TABLE bnbversion2.Comentarios_detalles;
+DROP TABLE bnbversion2.Lista;
+DROP TABLE bnbversion2.host;
+
+-----------------------------------------------------------------------
+#PARA INSERTAR LOS DATOS DESDE EL OTRO ESQUEMA
+
+#primero se inserta host
+
+INSERT INTO bnbversion2.host(host_id,host_name)
+SELECT DISTINCT (host_id),host_name
+FROM bnbversion1.listings;
+
+#segundo se inserta Lista
+
+INSERT INTO bnbversion2.Lista(id,nombre,host_id,room_type,price,latitud,Longitud,min_night,Num_of_reviews,last_review,
+review_per_month, calculated_host_listings_count,availability_365)
+SELECT id,nombre,host_id,room_type,price,latitud,Longidud,min_night,num_of_reviews,last_review,
+review_per_month, calculated_host_listings_count,availability_365
+FROM bnbversion1.listings;
+
+
+INSERT INTO bnbversion2.calendario(listing_id,date,available,price,host_id)
+SELECT DISTINCT (C.listing_id),C.date,C.available,C.price, L.host_id
+FROM bnbversion1.listings L, bnbversion1.calendar C
+WHERE L.id=C.listing_id;
+
+
+INSERT INTO bnbversion2.Comentarios_detalles(listing_id,id,host_id,date,reviewer_id,reviewer_name,comments)
+SELECT D.listing_id,D.id,L.host_id,D.date,D.reviewer_id,D.reviewer_name,D.comments
+FROM bnbversion1.reviews_details D,bnbversion1.listings L
+WHERE D.listing_id=L.id;
+
+SELECT * FROM bnbversion2.Lista;
+
+#Se inserta calendario
+--------------------------------------------------------------------
+SELECT * FROM bnbversion2.host;
+---------------------------------------------------------------------
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion1.calendar;
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion1.listings;
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion1.reviews_details;
+
+--------------------------------------------
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.calendario;
+
+#antes del indice
+Planning Time: 0.060 ms
+ Execution Time: 10789.679 ms
+#despues del indice
+ Planning Time: 28.942 ms
+ Execution Time: 9845.906 ms
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.Lista;
+
+#antes del indice
+ Planning Time: 1.240 ms
+ Execution Time: 28.134 ms
+
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.host;
+
+ Planning Time: 66.817 ms
+ Execution Time: 78.606 ms
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.Comentarios_detalles;
+
+Planning Time: 0.069 ms
+ Execution Time: 757.933 ms
+
+--------------------------------------------
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.Comentarios_detalles WHERE listing_id='2818';
+
+----------------------------------------------------------------------------------------
+bnbversion2.host(host_id,host_name)
+
+bnbversion2.calendario(listing_id,date,available,price,host_id)
+
+bnbversion2.Lista(id,nombre,host_id,room_type,price,latitud,Longitud,min_night,Num_of_reviews,last_review,
+review_per_month, calculated_host_listings_count,availability_365)
+
+bnbversion2.Comentarios_detalles(listing_id,id,host_id,date,reviewer_id,reviewer_name,comments)
+----------------------------------------------------------------------------------------
+\d bnbversion2.Lista
+
+----------------------------------------------------------------------------------------
+#CREAR INDICES
+
+CREATE INDEX in_date ON bnbversion2.calendario(date);
+CREATE INDEX in_type_room ON bnbversion2.Lista(room_type);
+
+CREATE INDEX ON bnbversion2.Lista();
+
+
+CREATE INDEX disponibilidad ON bnbversion2.calendario(listing_id, date, host_id);
+
+EXPLAIN ANALYZE
+SELECT * FROM bnbversion2.calendario;
+
+
+DROP INDEX bnbversion2.in_type_room;
+DROP INDEX bnbversion2.disponibilidad;
+----------------------------------------------------------------------------------------
+#CREAR VISTAS
+
+#calendario los que esten disponibles available=t y muestren precio??
+
+SELECT * 
+FROM bnbversion2.calendario
+WHERE available = 't'
+AND price IS NOT NULL;
+
+
+#listas los que están disponibles al menos la mitad del año >= 365/2
+#listas los lugares que te puedes quedar una semana como mínimo y room_type ='Entire home/apt'
+#listas los lugares que tengan mas de 300 reviews
+
+CREATE MATERIALIZED VIEW eval.NOMBRE AS
+SELECT A.a_nombre AS actor1, B.a_nombre AS actor2, COUNT (DISTINCT (A.p_nombre, A.p_anho)) as N_peliculas
+FROM topimdb.personaje A, topimdb.personaje B
+WHERE A.p_anho=B.p_anho 
+AND A.p_nombre=B.p_nombre
+AND A.a_nombre <B.a_nombre
+GROUP BY A.a_nombre, B.a_nombre;
+
+CREATE MATERIALIZED VIEW bnbversion2.informacion_host AS
+SELECT H.host_name,L.host_id,count(L.host_id) AS n_host, SUM(L.Num_of_reviews)
+FROM bnbversion2.Lista L, bnbversion2.host H
+WHERE L.host_id = H.host_id 
+GROUP BY L.host_id,H.host_name;
+
+EXPLAIN ANALYZE
+SELECT * FROM eval.CascadaParaEvitarColisiones;
